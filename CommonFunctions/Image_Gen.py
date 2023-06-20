@@ -11,7 +11,7 @@ class ImageGenFuncs():
         return
     
     @staticmethod
-    def gen_camera_images(gain_value, wavelength, R, G, B, dyes, n_photons, laser_int, image_masks, background_photons=100):
+    def gen_camera_images(gain_value, wavelength, R, G, B, dyes, n_photons, laser_int, object_locs, object_sigma=30, background_photons=100, image_h=1280, image_w=1024):
         # gen_camera_images function
         # creates however may images is appropriate given the laser sequence
         # ================INPUTS=============
@@ -22,7 +22,7 @@ class ImageGenFuncs():
         # dyes is tensor of N dyes * absorption * emission
         # n_photons is how many photons each dye outputs per object (must be same length as dyes tensor)
         # laser_intensities is n_wavelengths*(n_intensities) matrix saying which wavelength lasers were on at what intensitites
-        # image_masks is image masks per dye
+        # object_locs is object locations per dye
         # background_photons is average number of background photons per pixel
         # ================OUTPUTS============= 
         # raw_images is tensor of raw R G B channels camera would read out
@@ -30,12 +30,14 @@ class ImageGenFuncs():
         # B_image_demosaic is blue image
         # G_image_demosaic is green image
         # gain map is simulated gain map
-        h = image_masks.shape[0]; w = image_masks.shape[1]
+        h = image_h; w = image_w;
         from Gain import getgain; gain_cal = getgain.GainFunc(); gain_map = gain_cal.getgain(gain_value, h, w) # first, get gain map
         R_image = np.zeros([h, w]); G_image = np.zeros([h, w]); B_image = np.zeros([h, w]);
 
         laser_wavelengths = laser_int[0, :]
         laser_intensities = laser_int[1, :]
+                
+        image_masks = MG.mask_generation(object_locs, dyes.shape[-1], len(object_locs), object_sigma, h, w); # make image mask for first image
         for dye in np.arange(dyes.shape[-1]):
             dye_intensity = 0;
             for wvl in enumerate(laser_wavelengths):
@@ -53,4 +55,5 @@ class ImageGenFuncs():
         R_image_demosaic = cv2.cvtColor(raw_images[:,:,0], cv2.COLOR_BayerRG2RGB)
         G_image_demosaic = cv2.cvtColor(raw_images[:,:,1], cv2.COLOR_BayerRG2RGB)
         B_image_demosaic = cv2.cvtColor(raw_images[:,:,2], cv2.COLOR_BayerRG2RGB)
-        return raw_images, R_image_demosaic, G_image_demosaic, B_image_demosaic, gain_map
+        colour_image_demosaic = np.dstack([R_image_demosaic[:,:,0], G_image_demosaic[:,:,1], B_image_demosaic[:,:,2]])
+        return raw_images, colour_image_demosaic, gain_map

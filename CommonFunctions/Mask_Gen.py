@@ -9,18 +9,16 @@ class MaskFuncs():
         return
     
     @staticmethod
-    def mask_generation(n_dyes=3, n_objects=10, object_sigma=30, correlation=0, image_h=1280, image_w=1024):
+    def object_loc_generation(n_dyes=3, n_objects=10, correlation=0, image_h=1280, image_w=1024):
         # mask_generation function
         # for n dyes, create a mask for each of the dye stains
         # ================INPUTS============= 
         # n_dyes is number of dyes
         # n_objects is how many objects per dye
-        # object_sigma is how wide the object (circle) will be in pixels
         # correlation is how correlated object (i.e. dye) locations will be; 1 means high correlation 0 no correlation (two options)
         # image_h is image height in pixels
         # image_w is image width in pixels
         # ================OUTPUTS============= 
-        # image_masks is tensor containing n masks for n dyes
         # object_locs contains object centroid locations
         sigma = np.square(np.min([image_h, image_w])/5.) # empirical
         cov = np.identity(2)
@@ -41,17 +39,30 @@ class MaskFuncs():
                 object_locs[object_locs[:, 1, i+1] > image_w] = image_w
             else:
                 object_locs[:, :, i:] = object_locs[:, :, 0]
-
+        return object_locs
+    
+    @staticmethod
+    def mask_generation(object_locs, n_dyes=3, n_objects=10, object_sigma=30, image_h=1280, image_w=1024):
         # create image_mask tensor
+        # mask_generation function
+        # for n dyes, create a mask for each of the dye stains
+        # ================INPUTS============= 
+        # object_locs is where objects are
+        # n_dyes is number of dyes
+        # n_objects is how many objects per dye
+        # image_h is image height in pixels
+        # image_w is image width in pixels
+        # ================OUTPUTS============= 
+        # image_masks is image mask       
         image_masks = np.zeros([image_h, image_w, n_dyes])
         X, Y = np.meshgrid(np.arange(image_h), np.arange(image_w))
-
+        
         for i in np.arange(n_dyes):
             for j in np.arange(n_objects):
                 mx = object_locs[j, 0, i]
                 my = object_locs[j, 1, i]
                 image_masks[:, :, i] += Gau_gen.gaussian_2d(x=X, y=Y, mx=mx, my=my, sx=object_sigma, sy=object_sigma).T
-        return image_masks, object_locs
+        return image_masks
     
     @staticmethod
     def make_Bayer(image_h=1280, image_w=1024):
