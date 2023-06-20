@@ -20,7 +20,7 @@ class MaskFuncs():
         # image_w is image width in pixels
         # ================OUTPUTS============= 
         # object_locs contains object centroid locations
-        sigma = np.square(np.min([image_h, image_w])/5.) # empirical
+        sigma = np.square(np.min([image_w, image_h])/5.) # empirical
         cov = np.identity(2)
         test = np.where(~np.eye(cov.shape[0],dtype=bool))
         cov[test] = correlation
@@ -28,15 +28,15 @@ class MaskFuncs():
 
         object_locs = np.zeros([n_objects, 2, n_dyes])
 
-        object_locs[:, :, 0] = np.abs(np.random.multivariate_normal([image_h/2., image_w/2.], cov, size=(n_objects)))
-        object_locs[object_locs[:, 0, 0] > image_h] = image_h    
-        object_locs[object_locs[:, 1, 0] > image_w] = image_w
+        object_locs[:, :, 0] = np.abs(np.random.multivariate_normal([image_w/2., image_h/2.], cov, size=(n_objects)))
+        object_locs[object_locs[:, 1, 0] > image_h] = image_h    
+        object_locs[object_locs[:, 0, 0] > image_w] = image_w
 
         for i in np.arange(n_dyes-1):
             if correlation == 0:
-                object_locs[:, :, i+1] = np.abs(np.random.multivariate_normal([image_h/2., image_w/2.], cov, size=(n_objects)))
-                object_locs[object_locs[:, 0, i+1] > image_h] = image_h    
-                object_locs[object_locs[:, 1, i+1] > image_w] = image_w
+                object_locs[:, :, i+1] = np.abs(np.random.multivariate_normal([image_w/2., image_h/2.], cov, size=(n_objects)))
+                object_locs[object_locs[:, 1, i+1] > image_h] = image_h    
+                object_locs[object_locs[:, 0, i+1] > image_w] = image_w
             else:
                 object_locs[:, :, i:] = object_locs[:, :, 0]
         return object_locs
@@ -54,8 +54,8 @@ class MaskFuncs():
         # image_w is image width in pixels
         # ================OUTPUTS============= 
         # image_masks is image mask       
-        image_masks = np.zeros([image_h, image_w, n_dyes])
-        X, Y = np.meshgrid(np.arange(image_h), np.arange(image_w))
+        image_masks = np.zeros([image_w, image_h, n_dyes])
+        X, Y = np.meshgrid(np.arange(image_w), np.arange(image_h))
         
         for i in np.arange(n_dyes):
             for j in np.arange(n_objects):
@@ -81,7 +81,7 @@ class MaskFuncs():
         red_mask = np.array([[0, 0], [0, 1]])
 
         #create overall image masks
-        red_mask_image = np.tile(red_mask, (int(image_h/2), int(image_w/2)))
-        green_mask_image = np.tile(green_mask, (int(image_h/2), int(image_w/2)))
-        blue_mask_image = np.tile(blue_mask, (int(image_h/2), int(image_w/2)))
+        red_mask_image = np.tile(red_mask, (int(image_w/2), int(image_h/2)))
+        green_mask_image = np.tile(green_mask, (int(image_w/2), int(image_h/2)))
+        blue_mask_image = np.tile(blue_mask, (int(image_w/2), int(image_h/2)))
         return red_mask_image, green_mask_image, blue_mask_image

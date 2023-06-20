@@ -27,6 +27,6 @@ class GainFunc():
         sigma_gain = pd.read_csv(Sigma_Gain) # read gain sigma
         gm_val = np.interp(x=gainval, xp=gain_values.values[:, 0], fp=gain_values.values[:, 1])
         gs_val = gm_val*0.1
-        gain_map = np.random.normal(loc=gm_val, scale=gs_val, size=(image_h, image_w))
+        gain_map = np.random.normal(loc=gm_val, scale=gs_val, size=(image_w, image_h))
         gain_map[gain_map < 0] = 0
         return gain_map
